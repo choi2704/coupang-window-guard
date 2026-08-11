@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>쿠팡 방범창 가격 계산기</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f5f7fb;font-family:Arial,"Noto Sans KR","Malgun Gothic",sans-serif;color:#172033}
+.wrap{max-width:720px;margin:0 auto;padding:24px 16px 50px}
+.card{background:#fff;border-radius:22px;padding:24px;box-shadow:0 10px 28px rgba(20,34,66,.08);border:1px solid #e7ebf2}
+h1{margin:0 0 6px;font-size:30px;letter-spacing:-1px}
+.sub{margin:0 0 22px;color:#667085;font-size:15px}
+.materials{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.materials button{border:1px solid #d7ddea;background:#fff;border-radius:12px;padding:13px 8px;font-size:15px;font-weight:700;cursor:pointer}
+.materials button.active{background:#172b4d;color:white;border-color:#172b4d}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;font-size:14px;font-weight:700;margin-bottom:7px}
+input{width:100%;height:52px;border:1px solid #ccd3df;border-radius:12px;padding:0 14px;font-size:20px;outline:none}
+input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
+.calc{margin-top:16px;width:100%;height:56px;border:none;border-radius:14px;background:#ffbf3f;font-size:20px;font-weight:800;cursor:pointer}
+.result{margin-top:22px;border-radius:18px;background:#f8fafc;padding:20px;border:1px solid #e4e9f0;display:none}
+.result .small{font-size:14px;color:#667085;margin-bottom:8px}
+.result .qty{font-size:20px;font-weight:800}
+.result .price{font-size:34px;font-weight:900;margin-top:5px;letter-spacing:-1px}
+.note{margin-top:14px;font-size:13px;color:#667085;line-height:1.6}
+.error{margin-top:18px;padding:14px 16px;background:#fff1f2;border:1px solid #fecdd3;color:#9f1239;border-radius:12px;display:none;line-height:1.5}
+@media(max-width:520px){
+  h1{font-size:26px}
+  .card{padding:18px}
+  .materials{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>쿠팡 방범창 가격 계산기</h1>
+    <p class="sub">재질 선택 후 가로·세로(mm)를 입력하면 단가표 기준 가격을 계산합니다.</p>
+
+    <div class="materials">
+      <button class="active" data-key="sus201">SUS201</button>
+      <button data-key="sus304">SUS304</button>
+      <button data-key="al">알루미늄</button>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label for="width">가로 (mm)</label>
+        <input id="width" type="number" min="1" step="1" placeholder="예: 1550">
+      </div>
+      <div>
+        <label for="height">세로 (mm)</label>
+        <input id="height" type="number" min="1" step="1" placeholder="예: 1650">
+      </div>
+    </div>
+
+    <button class="calc" id="calcBtn">가격 계산하기</button>
+
+    <div class="error" id="error"></div>
+
+    <div class="result" id="result">
+      <div class="small" id="rangeText"></div>
+      <div class="qty" id="qtyText"></div>
+      <div class="price" id="priceText"></div>
+    </div>
+
+    <div class="note">
+      · 가격 = 단가표 주문수량 × 1,000원<br>
+      · 배송비는 포함하지 않습니다.<br>
+      · 입력값이 표 범위를 벗어나면 계산되지 않습니다.
+    </div>
+  </div>
+</div>
+
+<script>
+const TABLES = {"sus201": {"label": "SUS201 방범창", "width_bins": [[1, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2101, 2200], [2201, 2300], [2301, 2400]], "height_bins": [[1, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2101, 2200], [2201, 2300], [2301, 2400]], "data": [[57, 64, 70, 76, 83, 89, 95, 102, 108, 114, 121, 127, 133, 140, 146, 152], [64, 71, 78, 85, 92, 99, 106, 113, 120, 127, 134, 141, 148, 156, 162, 169], [70, 78, 86, 93, 101, 109, 117, 124, 132, 140, 147, 156, 163, 170, 179, 186], [76, 85, 93, 102, 110, 119, 127, 136, 144, 152, 161, 169, 178, 186, 195, 203], [83, 92, 101, 110, 120, 128, 138, 147, 156, 165, 175, 183, 193, 202, 210, 220], [89, 99, 109, 119, 128, 139, 148, 158, 168, 178, 187, 198, 207, 217, 227, 237], [95, 106, 117, 127, 138, 148, 159, 169, 180, 190, 201, 211, 222, 233, 243, 254], [102, 113, 124, 136, 147, 158, 169, 181, 191, 203, 215, 225, 237, 248, 259, 271], [108, 120, 132, 144, 156, 168, 180, 191, 204, 216, 227, 240, 252, 263, 276, 287], [114, 127, 140, 152, 165, 178, 190, 203, 216, 228, 241, 254, 266, 279, 292, 304], [121, 134, 147, 161, 175, 187, 201, 215, 227, 241, 255, 267, 281, 295, 308, 321], [127, 141, 156, 169, 183, 198, 211, 225, 240, 254, 267, 282, 296, 310, 324, 338], [133, 148, 163, 178, 193, 207, 222, 237, 252, 266, 281, 296, 311, 325, 340, 355], [140, 156, 170, 186, 202, 217, 233, 248, 263, 279, 295, 310, 325, 341, 356, 372], [146, 162, 179, 195, 210, 227, 243, 259, 276, 292, 308, 324, 340, 356, 373, 389], [152, 169, 186, 203, 220, 237, 254, 271, 287, 304, 321, 338, 355, 372, 389, 406]]}, "sus304": {"label": "SUS304 방범창", "width_bins": [[1, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2201, 2300], [2301, 2400]], "height_bins": [[1, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2101, 2200], [2201, 2300], [2301, 2400]], "data": [[67, 74, 81, 89, 97, 105, 113, 122, 130, 138, 146, 153, 161, 168, 183], [74, 82, 90, 98, 106, 115, 124, 132, 141, 149, 158, 166, 175, 184, 202], [82, 90, 98, 107, 115, 125, 134, 143, 153, 162, 171, 180, 190, 200, 219], [89, 98, 107, 116, 125, 134, 144, 153, 163, 172, 182, 191, 201, 211, 231], [97, 106, 116, 125, 134, 144, 153, 163, 172, 182, 192, 202, 212, 222, 243], [105, 115, 125, 134, 144, 153, 163, 172, 182, 192, 203, 213, 224, 234, 256], [113, 124, 134, 144, 153, 163, 173, 183, 193, 204, 214, 225, 236, 247, 259], [122, 132, 143, 153, 163, 173, 183, 195, 204, 216, 228, 240, 252, 263, 287], [130, 141, 153, 163, 174, 183, 195, 206, 217, 229, 241, 253, 266, 279, 304], [138, 149, 162, 172, 183, 193, 206, 217, 229, 241, 254, 266, 279, 294, 321], [146, 158, 171, 183, 195, 204, 217, 229, 241, 254, 268, 282, 295, 310, 338], [153, 166, 180, 192, 204, 215, 229, 241, 254, 268, 282, 296, 310, 326, 356], [161, 175, 190, 203, 215, 229, 242, 256, 270, 284, 299, 313, 327, 343, 375], [168, 183, 199, 212, 225, 240, 254, 268, 283, 298, 313, 328, 343, 360, 377], [175, 190, 207, 221, 234, 249, 264, 279, 294, 310, 326, 342, 358, 376, 394], [183, 199, 216, 231, 245, 261, 276, 292, 308, 324, 341, 358, 375, 393, 430]]}, "al": {"label": "알루미늄 방범창", "width_bins": [[1, 600], [601, 700], [701, 800], [801, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2101, 2200]], "height_bins": [[1, 600], [601, 700], [701, 800], [801, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2101, 2200]], "data": [[15, 20, 25, 30, 34, 39, 44, 53, 58, 67, 77, 84, 91, 103, 113, 124, 134], [20, 25, 30, 34, 39, 44, 49, 58, 63, 72, 82, 96, 96, 108, 117, 129, 139], [25, 30, 34, 39, 44, 49, 53, 63, 67, 77, 86, 94, 101, 113, 113, 122, 143], [30, 34, 39, 44, 49, 53, 58, 67, 72, 82, 91, 98, 105, 117, 127, 139, 148], [34, 39, 44, 49, 53, 58, 63, 72, 77, 86, 96, 103, 110, 122, 132, 143, 153], [39, 44, 49, 53, 58, 63, 67, 77, 82, 91, 101, 108, 115, 127, 136, 148, 158], [44, 49, 53, 58, 63, 67, 72, 82, 86, 96, 105, 113, 120, 132, 141, 153, 162], [53, 58, 63, 67, 72, 77, 82, 91, 96, 105, 115, 122, 129, 141, 151, 162, 172], [58, 63, 67, 72, 77, 82, 86, 96, 101, 110, 120, 127, 134, 146, 155, 167, 177], [67, 72, 77, 82, 86, 91, 96, 105, 110, 120, 129, 136, 143, 155, 165, 177, 186], [77, 82, 86, 91, 96, 101, 105, 115, 120, 129, 139, 145, 153, 165, 174, 186, 196], [84, 89, 94, 98, 103, 108, 113, 122, 127, 136, 146, 153, 160, 172, 181, 193, 203], [91, 96, 101, 105, 110, 115, 120, 129, 134, 143, 153, 160, 167, 179, 189, 200, 210], [103, 108, 113, 117, 122, 127, 132, 141, 146, 155, 165, 172, 179, 191, 200, 212, 222], [113, 117, 122, 127, 132, 136, 141, 151, 155, 165, 174, 181, 189, 200, 210, 222, 231], [124, 129, 134, 139, 143, 148, 153, 162, 167, 177, 186, 193, 200, 212, 222, 234, 243], [134, 139, 143, 148, 153, 158, 162, 172, 177, 186, 196, 203, 210, 222, 231, 243, 253]]}};
+let selected = "sus201";
+
+document.querySelectorAll(".materials button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".materials button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    selected = btn.dataset.key;
+    document.getElementById("result").style.display = "none";
+    document.getElementById("error").style.display = "none";
+  });
+});
+
+function findIndex(value, bins) {
+  for (let i=0; i<bins.length; i++) {
+    if (value >= bins[i][0] && value <= bins[i][1]) return i;
+  }
+  return -1;
+}
+function binLabel(bin) {
+  return bin[0] === 1 ? "~" + bin[1] : bin[0] + "~" + bin[1];
+}
+function won(n) {
+  return new Intl.NumberFormat("ko-KR").format(n) + "원";
+}
+
+function calculate() {
+  const w = Number(document.getElementById("width").value);
+  const h = Number(document.getElementById("height").value);
+  const t = TABLES[selected];
+  const error = document.getElementById("error");
+  const result = document.getElementById("result");
+  error.style.display = "none";
+  result.style.display = "none";
+
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+    error.textContent = "가로와 세로를 mm 단위로 입력해주세요.";
+    error.style.display = "block";
+    return;
+  }
+
+  const ci = findIndex(w, t.width_bins);
+  const ri = findIndex(h, t.height_bins);
+
+  if (ci < 0 || ri < 0) {
+    let msg = "입력한 사이즈가 현재 단가표 범위에 없습니다.";
+    if (selected === "sus304" && w >= 2101 && w <= 2200) {
+      msg = "SUS304 제공 단가표에는 가로 2101~2200 구간 값이 없어 계산할 수 없습니다.";
+    }
+    error.textContent = msg;
+    error.style.display = "block";
+    return;
+  }
+
+  const qty = t.data[ri][ci];
+  if (qty == null) {
+    error.textContent = "해당 구간의 단가표 값이 없습니다.";
+    error.style.display = "block";
+    return;
+  }
+  const price = qty * 1000;
+
+  document.getElementById("rangeText").textContent =
+    t.label + " · 가로 " + binLabel(t.width_bins[ci]) + " / 세로 " + binLabel(t.height_bins[ri]);
+  document.getElementById("qtyText").textContent = "주문수량 " + qty + "개";
+  document.getElementById("priceText").textContent = won(price);
+  result.style.display = "block";
+}
+
+document.getElementById("calcBtn").addEventListener("click", calculate);
+["width","height"].forEach(id => {
+  document.getElementById(id).addEventListener("keydown", e => {
+    if (e.key === "Enter") calculate();
+  });
+});
+</script>
+</body>
+</html>
