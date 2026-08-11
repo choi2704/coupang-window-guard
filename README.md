@@ -1,0 +1,1 @@
+# coupang-window-guard
