@@ -85,7 +85,7 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
       </div>
     </div>
 
-    <div id="alMin" style="display:block;margin-top:10px;font-size:14px;font-weight:700;color:#c2410c;">가로·세로 각각 900mm 미만은 900mm 기준으로 계산합니다.</div><button class="calc" id="calcBtn">가격 계산하기</button>
+    <div id="alMin" style="display:none;margin-top:10px;font-size:14px;font-weight:700;color:#c2410c;">가로·세로 각각 최소 900mm 적용 · 알루미늄은 한 변이 2200mm 이상이면 평당 8,000원 적용</div><button class="calc" id="calcBtn">가격 계산하기</button>
     <button type="button" class="quick-add" id="quickAddBtn">＋ 견적 추가하기</button>
     <div class="hint-add">여러 규격은 가로·세로를 바꿔가며 계속 추가하세요.</div>
 
@@ -100,7 +100,7 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
 
     <section class="quote" aria-label="견적 리스트">
       <h2>견적 리스트 <span id="itemCount">(0건)</span></h2>
-      <div id="quoteItems" class="empty">가로·세로 입력 후 ‘＋ 견적 추가하기’를 눌러주세요.</div>
+      <div id="quoteItems" class="empty">견적을 계산한 뒤 ‘견적 리스트에 추가’를 눌러주세요.</div>
       <div class="quote-total"><span>총 견적금액</span><span id="grandTotal">0원</span></div>
       <div class="quote-actions"><button type="button" id="copyBtn">견적 내용 복사</button><button type="button" id="clearBtn">전체 삭제</button></div>
       <div id="copyStatus" class="copy-status" role="status"></div>
@@ -118,9 +118,9 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
     </section>
 
     <div class="note">
-      · 가격 = 단가표 주문수량 × 1,000원<br>
+      · 가격 = 단가표 주문수량 × 1,000원 (알루미늄 2200mm 이상은 평단가 적용)<br>
       · 배송비는 포함하지 않습니다.<br>
-      · 가로·세로 각각 900mm 미만은 900mm 기준으로 계산합니다.<br>
+      · 가로·세로 각각 최소 900mm 적용 · 알루미늄은 한 변이 2200mm 이상이면 평당 8,000원 적용<br>
       · 입력값이 표 범위를 벗어나면 계산되지 않습니다.
     </div>
   </div>
@@ -138,7 +138,7 @@ document.querySelectorAll(".materials button").forEach(btn => {
     document.querySelectorAll(".materials button").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     selected = btn.dataset.key;
-    document.getElementById("alMin").style.display = "block";
+    document.getElementById("alMin").style.display = selected === "al" ? "block" : "none";
     document.getElementById("result").style.display = "none";
     currentQuote = null;
     document.getElementById("error").style.display = "none";
@@ -174,33 +174,41 @@ function calculate() {
     return false;
   }
 
-  const billingW = Math.max(900, w);
-  const billingH = Math.max(900, h);
-  const ci = findIndex(billingW, t.width_bins);
-  const ri = findIndex(billingH, t.height_bins);
-
-  if (ci < 0 || ri < 0) {
-    let msg = "입력한 사이즈가 현재 단가표 범위에 없습니다.";
-    if (selected === "sus304" && w >= 2101 && w <= 2200) {
-      msg = "SUS304 제공 단가표에는 가로 2101~2200 구간 값이 없어 계산할 수 없습니다.";
+  // 주문/발주서에는 원래 입력 규격을 남기고 가격 계산만 최소 900mm 적용.
+  const cw = Math.max(900, w);
+  const ch = Math.max(900, h);
+  let qty, price, explanation;
+  if (selected === "al" && (w >= 2200 || h >= 2200)) {
+    // 이 견적기는 결제금액 1,000원당 주문수량 1개로 연동됨.
+    // 기존 관행대로 1평 = 300mm × 300mm, 1,000원 단위 올림.
+    const rawPrice = (cw * ch / 90000) * 8000;
+    qty = Math.ceil(rawPrice / 1000);
+    price = qty * 1000;
+    explanation = t.label + " · 평당 8,000원 (300×300mm 기준) · 계산 규격 " + cw + "×" + ch + "mm";
+  } else {
+    const ci = findIndex(cw, t.width_bins);
+    const ri = findIndex(ch, t.height_bins);
+    if (ci < 0 || ri < 0) {
+      let msg = "입력한 사이즈가 현재 단가표 범위에 없습니다.";
+      if (selected === "sus304" && cw >= 2101 && cw <= 2200) {
+        msg = "SUS304 제공 단가표에는 가로 2101~2200 구간 값이 없어 계산할 수 없습니다.";
+      }
+      error.textContent = msg;
+      error.style.display = "block";
+      return false;
     }
-    error.textContent = msg;
-    error.style.display = "block";
-    return;
+    qty = t.data[ri][ci];
+    if (qty == null) {
+      error.textContent = "해당 구간의 단가표 값이 없습니다.";
+      error.style.display = "block";
+      return false;
+    }
+    price = qty * 1000;
+    explanation = t.label + " · 가로 " + binLabel(t.width_bins[ci]) + " / 세로 " + binLabel(t.height_bins[ri]);
+    if (cw !== w || ch !== h) explanation += " (최소 900mm 적용)";
   }
-
-  const qty = t.data[ri][ci];
-  if (qty == null) {
-    error.textContent = "해당 구간의 단가표 값이 없습니다.";
-    error.style.display = "block";
-    return;
-  }
-  const price = qty * 1000;
   currentQuote = { material:t.label, w, h, qty, price };
-
-  document.getElementById("rangeText").textContent =
-    t.label + " · 가로 " + binLabel(t.width_bins[ci]) + " / 세로 " + binLabel(t.height_bins[ri]) +
-    ((w < 900 || h < 900) ? " (900mm 미만 치수는 900mm 기준 적용)" : "");
+  document.getElementById("rangeText").textContent = explanation;
   document.getElementById("qtyText").textContent = "주문수량 " + qty + "개";
   document.getElementById("priceText").textContent = won(price);
   result.style.display = "block";
@@ -213,7 +221,7 @@ function renderQuotes() {
   $("itemCount").textContent = `(${quoteList.length}건)`;
   if (!quoteList.length) {
     holder.className = "empty";
-    holder.textContent = "가로·세로 입력 후 ‘＋ 견적 추가하기’를 눌러주세요.";
+    holder.textContent = "견적을 계산한 뒤 ‘견적 리스트에 추가’를 눌러주세요.";
   } else {
     holder.className = "";
     quoteList.forEach((entry, index) => {
