@@ -19,10 +19,25 @@ label{display:block;font-size:14px;font-weight:700;margin-bottom:7px}
 input{width:100%;height:52px;border:1px solid #ccd3df;border-radius:12px;padding:0 14px;font-size:20px;outline:none}
 input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
 .calc{margin-top:16px;width:100%;height:56px;border:none;border-radius:14px;background:#ffbf3f;font-size:20px;font-weight:800;cursor:pointer}
+.quick-add{margin-top:10px;width:100%;height:58px;border:0;border-radius:14px;background:#1554c0;color:#fff;font-size:20px;font-weight:900;cursor:pointer}.hint-add{margin-top:7px;font-size:14px;color:#55647b;text-align:center}
 .result{margin-top:22px;border-radius:18px;background:#f8fafc;padding:20px;border:1px solid #e4e9f0;display:none}
 .result .small{font-size:14px;color:#667085;margin-bottom:8px}
 .result .qty{font-size:20px;font-weight:800}
 .result .price{font-size:34px;font-weight:900;margin-top:5px;letter-spacing:-1px}
+.add{width:100%;margin-top:12px;height:52px;border:0;border-radius:12px;background:#1c4fc4;color:#fff;font-size:18px;font-weight:800;cursor:pointer}
+.quote{margin-top:20px;border:1px solid #d9e2ef;border-radius:17px;padding:18px;background:#fff}
+.quote h2{font-size:21px;margin:0 0 12px}
+.quote-item{padding:13px 0;border-top:1px solid #e9edf3;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.quote-title{font-weight:800;font-size:15px;line-height:1.5}
+.quote-detail{color:#667085;font-size:13px;line-height:1.6}
+.quote-price{font-weight:800;font-size:17px;white-space:nowrap}
+.delete{padding:8px 10px;border-radius:8px;border:1px solid #ddd;background:white;color:#ae233b;cursor:pointer;font-weight:bold}
+.quote-total{border-top:2px solid #1b3155;margin-top:8px;padding-top:16px;display:flex;justify-content:space-between;align-items:center;font-weight:900;font-size:20px}
+.quote-actions{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:15px}
+.quote-actions button{border:0;border-radius:11px;padding:14px 8px;font-size:16px;font-weight:800;cursor:pointer}
+#copyBtn{background:#172b4d;color:#fff}#clearBtn{background:#edf0f5;color:#374151}
+.empty{color:#687385;font-size:14px;padding:10px 0}
+.copy-status{font-size:13px;color:#146534;margin-top:8px;min-height:19px}
 .note{margin-top:14px;font-size:13px;color:#667085;line-height:1.6}
 .error{margin-top:18px;padding:14px 16px;background:#fff1f2;border:1px solid #fecdd3;color:#9f1239;border-radius:12px;display:none;line-height:1.5}
 @media(max-width:520px){
@@ -31,6 +46,20 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
   .materials{grid-template-columns:1fr}
   .grid{grid-template-columns:1fr}
 }
+
+.order-form{margin-top:18px;border:1px solid #cbd8ee;background:#f7faff;border-radius:16px;padding:16px}
+.order-form h3{margin:0 0 12px;font-size:19px}
+.order-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.order-fields input,.order-fields textarea{font-size:15px;height:44px;background:#fff}
+.order-fields textarea{height:76px;resize:vertical;padding:12px;width:100%;border:1px solid #ccd3df;border-radius:12px;font-family:inherit}
+.order-fields .full{grid-column:1/-1}
+.order-create{width:100%;margin-top:13px;border:0;border-radius:12px;background:#126d91;color:white;padding:16px 6px;font-size:18px;font-weight:800;cursor:pointer}
+.order-preview{display:none;margin-top:16px}
+.order-preview img{display:block;width:100%;border:1px solid #d6dfed;border-radius:8px;background:white}
+.order-save{display:flex;gap:8px;margin-top:10px}
+.order-save button{flex:1;border:0;border-radius:10px;padding:14px 8px;font-size:16px;font-weight:800;cursor:pointer;background:#172b4d;color:white}
+.order-save button:last-child{background:#dbeafe;color:#153467}
+@media(max-width:520px){.order-fields{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -56,7 +85,9 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
       </div>
     </div>
 
-    <div id="alMin" style="display:none;margin-top:10px;font-size:14px;font-weight:700;color:#c2410c;">알루미늄은 900×900mm부터 계산됩니다.</div><button class="calc" id="calcBtn">가격 계산하기</button>
+    <div id="alMin" style="display:block;margin-top:10px;font-size:14px;font-weight:700;color:#c2410c;">가로·세로 각각 900mm 미만은 900mm 기준으로 계산합니다.</div><button class="calc" id="calcBtn">가격 계산하기</button>
+    <button type="button" class="quick-add" id="quickAddBtn">＋ 견적 추가하기</button>
+    <div class="hint-add">여러 규격은 가로·세로를 바꿔가며 계속 추가하세요.</div>
 
     <div class="error" id="error"></div>
 
@@ -64,12 +95,32 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
       <div class="small" id="rangeText"></div>
       <div class="qty" id="qtyText"></div>
       <div class="price" id="priceText"></div>
+      <button type="button" class="add" id="addBtn">+ 견적 리스트에 추가</button>
     </div>
+
+    <section class="quote" aria-label="견적 리스트">
+      <h2>견적 리스트 <span id="itemCount">(0건)</span></h2>
+      <div id="quoteItems" class="empty">가로·세로 입력 후 ‘＋ 견적 추가하기’를 눌러주세요.</div>
+      <div class="quote-total"><span>총 견적금액</span><span id="grandTotal">0원</span></div>
+      <div class="quote-actions"><button type="button" id="copyBtn">견적 내용 복사</button><button type="button" id="clearBtn">전체 삭제</button></div>
+      <div id="copyStatus" class="copy-status" role="status"></div>
+      <div class="order-form">
+        <h3>발주서 이미지 자동작성</h3>
+        <div class="order-fields">
+          <div><label for="orderName">주문자명</label><input id="orderName" placeholder="예: 신용섭"></div>
+          <div><label for="orderPhone">연락처</label><input id="orderPhone" type="tel" placeholder="010-0000-0000"></div>
+          <div class="full"><label for="orderDelivery">배송사항 (배송방법 / 주소)</label><textarea id="orderDelivery" placeholder="택배 선불&#10;배송지 주소"></textarea></div>
+          <div class="full"><label for="orderNote">제품 상세·색상·특이사항 (선택)</label><input id="orderNote" placeholder="예: 알루미늄 화이트 방범창 세로형(8틀)"></div>
+        </div>
+        <button type="button" class="order-create" id="orderMakeBtn">📄 견적내용대로 발주서 자동작성하기</button>
+        <div class="order-preview" id="orderPreview"><img id="orderImage" alt="자동 작성된 발주서 미리보기"><div class="order-save"><button type="button" id="orderDownloadBtn">이미지 저장(PNG)</button><button type="button" id="orderShareBtn">이미지 공유</button></div></div>
+      </div>
+    </section>
 
     <div class="note">
       · 가격 = 단가표 주문수량 × 1,000원<br>
       · 배송비는 포함하지 않습니다.<br>
-      · 알루미늄은 900×900mm부터 계산됩니다.<br>
+      · 가로·세로 각각 900mm 미만은 900mm 기준으로 계산합니다.<br>
       · 입력값이 표 범위를 벗어나면 계산되지 않습니다.
     </div>
   </div>
@@ -78,14 +129,18 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
 <script>
 const TABLES = {"sus201": {"label": "SUS201 방범창", "width_bins": [[1, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2101, 2200], [2201, 2300], [2301, 2400]], "height_bins": [[1, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2101, 2200], [2201, 2300], [2301, 2400]], "data": [[57, 64, 70, 76, 83, 89, 95, 102, 108, 114, 121, 127, 133, 140, 146, 152], [64, 71, 78, 85, 92, 99, 106, 113, 120, 127, 134, 141, 148, 156, 162, 169], [70, 78, 86, 93, 101, 109, 117, 124, 132, 140, 147, 156, 163, 170, 179, 186], [76, 85, 93, 102, 110, 119, 127, 136, 144, 152, 161, 169, 178, 186, 195, 203], [83, 92, 101, 110, 120, 128, 138, 147, 156, 165, 175, 183, 193, 202, 210, 220], [89, 99, 109, 119, 128, 139, 148, 158, 168, 178, 187, 198, 207, 217, 227, 237], [95, 106, 117, 127, 138, 148, 159, 169, 180, 190, 201, 211, 222, 233, 243, 254], [102, 113, 124, 136, 147, 158, 169, 181, 191, 203, 215, 225, 237, 248, 259, 271], [108, 120, 132, 144, 156, 168, 180, 191, 204, 216, 227, 240, 252, 263, 276, 287], [114, 127, 140, 152, 165, 178, 190, 203, 216, 228, 241, 254, 266, 279, 292, 304], [121, 134, 147, 161, 175, 187, 201, 215, 227, 241, 255, 267, 281, 295, 308, 321], [127, 141, 156, 169, 183, 198, 211, 225, 240, 254, 267, 282, 296, 310, 324, 338], [133, 148, 163, 178, 193, 207, 222, 237, 252, 266, 281, 296, 311, 325, 340, 355], [140, 156, 170, 186, 202, 217, 233, 248, 263, 279, 295, 310, 325, 341, 356, 372], [146, 162, 179, 195, 210, 227, 243, 259, 276, 292, 308, 324, 340, 356, 373, 389], [152, 169, 186, 203, 220, 237, 254, 271, 287, 304, 321, 338, 355, 372, 389, 406]]}, "sus304": {"label": "SUS304 방범창", "width_bins": [[1, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2201, 2300], [2301, 2400]], "height_bins": [[1, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2101, 2200], [2201, 2300], [2301, 2400]], "data": [[67, 74, 81, 89, 97, 105, 113, 122, 130, 138, 146, 153, 161, 168, 183], [74, 82, 90, 98, 106, 115, 124, 132, 141, 149, 158, 166, 175, 184, 202], [82, 90, 98, 107, 115, 125, 134, 143, 153, 162, 171, 180, 190, 200, 219], [89, 98, 107, 116, 125, 134, 144, 153, 163, 172, 182, 191, 201, 211, 231], [97, 106, 116, 125, 134, 144, 153, 163, 172, 182, 192, 202, 212, 222, 243], [105, 115, 125, 134, 144, 153, 163, 172, 182, 192, 203, 213, 224, 234, 256], [113, 124, 134, 144, 153, 163, 173, 183, 193, 204, 214, 225, 236, 247, 259], [122, 132, 143, 153, 163, 173, 183, 195, 204, 216, 228, 240, 252, 263, 287], [130, 141, 153, 163, 174, 183, 195, 206, 217, 229, 241, 253, 266, 279, 304], [138, 149, 162, 172, 183, 193, 206, 217, 229, 241, 254, 266, 279, 294, 321], [146, 158, 171, 183, 195, 204, 217, 229, 241, 254, 268, 282, 295, 310, 338], [153, 166, 180, 192, 204, 215, 229, 241, 254, 268, 282, 296, 310, 326, 356], [161, 175, 190, 203, 215, 229, 242, 256, 270, 284, 299, 313, 327, 343, 375], [168, 183, 199, 212, 225, 240, 254, 268, 283, 298, 313, 328, 343, 360, 377], [175, 190, 207, 221, 234, 249, 264, 279, 294, 310, 326, 342, 358, 376, 394], [183, 199, 216, 231, 245, 261, 276, 292, 308, 324, 341, 358, 375, 393, 430]]}, "al": {"label": "알루미늄 방범창", "width_bins": [[900, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2101, 2200]], "height_bins": [[900, 900], [901, 1000], [1001, 1100], [1101, 1200], [1201, 1300], [1301, 1400], [1401, 1500], [1501, 1600], [1601, 1700], [1701, 1800], [1801, 1900], [1901, 2000], [2001, 2100], [2101, 2200]], "data": [[46, 54, 59, 68, 67, 72, 82, 91, 98, 105, 117, 127, 148, 162], [54, 59, 68, 77, 72, 77, 86, 96, 103, 110, 122, 132, 153, 174], [59, 68, 77, 88, 77, 82, 91, 101, 108, 115, 127, 146, 158, 186], [68, 77, 88, 95, 82, 86, 96, 105, 113, 120, 132, 151, 162, 199], [77, 88, 95, 104, 91, 96, 105, 115, 122, 129, 141, 162, 172, 216], [88, 95, 104, 113, 96, 101, 110, 120, 127, 134, 146, 167, 177, 234], [95, 104, 113, 124, 105, 110, 120, 129, 136, 143, 155, 177, 186, 253], [104, 113, 124, 135, 115, 120, 129, 139, 145, 153, 165, 186, 196, 273], [115, 125, 137, 148, 122, 127, 136, 146, 153, 160, 172, 193, 203, 297], [127, 138, 149, 161, 129, 134, 143, 153, 160, 167, 179, 200, 210, 324], [140, 151, 162, 174, 141, 146, 155, 165, 172, 179, 191, 212, 222, 347], [151, 162, 174, 186, 151, 155, 165, 174, 181, 189, 200, 222, 231, 370], [162, 174, 186, 199, 162, 167, 177, 186, 193, 200, 212, 234, 243, 394], [174, 186, 199, 216, 172, 177, 186, 196, 203, 210, 222, 243, 253, 420]]}};
 let selected = "sus201";
+let currentQuote = null;
+let quoteList = [];
+const $ = id => document.getElementById(id);
 
 document.querySelectorAll(".materials button").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".materials button").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     selected = btn.dataset.key;
-    document.getElementById("alMin").style.display = selected === "al" ? "block" : "none";
+    document.getElementById("alMin").style.display = "block";
     document.getElementById("result").style.display = "none";
+    currentQuote = null;
     document.getElementById("error").style.display = "none";
   });
 });
@@ -111,21 +166,18 @@ function calculate() {
   const result = document.getElementById("result");
   error.style.display = "none";
   result.style.display = "none";
-
-  if (selected === "al" && (w < 900 || h < 900)) {
-    error.textContent = "알루미늄 방범창은 가로 900mm × 세로 900mm부터 계산 가능합니다.";
-    error.style.display = "block";
-    return;
-  }
+  currentQuote = null;
 
   if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
     error.textContent = "가로와 세로를 mm 단위로 입력해주세요.";
     error.style.display = "block";
-    return;
+    return false;
   }
 
-  const ci = findIndex(w, t.width_bins);
-  const ri = findIndex(h, t.height_bins);
+  const billingW = Math.max(900, w);
+  const billingH = Math.max(900, h);
+  const ci = findIndex(billingW, t.width_bins);
+  const ri = findIndex(billingH, t.height_bins);
 
   if (ci < 0 || ri < 0) {
     let msg = "입력한 사이즈가 현재 단가표 범위에 없습니다.";
@@ -144,13 +196,189 @@ function calculate() {
     return;
   }
   const price = qty * 1000;
+  currentQuote = { material:t.label, w, h, qty, price };
 
   document.getElementById("rangeText").textContent =
-    t.label + " · 가로 " + binLabel(t.width_bins[ci]) + " / 세로 " + binLabel(t.height_bins[ri]);
+    t.label + " · 가로 " + binLabel(t.width_bins[ci]) + " / 세로 " + binLabel(t.height_bins[ri]) +
+    ((w < 900 || h < 900) ? " (900mm 미만 치수는 900mm 기준 적용)" : "");
   document.getElementById("qtyText").textContent = "주문수량 " + qty + "개";
   document.getElementById("priceText").textContent = won(price);
   result.style.display = "block";
+  return true;
 }
+
+function renderQuotes() {
+  const holder = $("quoteItems");
+  holder.replaceChildren();
+  $("itemCount").textContent = `(${quoteList.length}건)`;
+  if (!quoteList.length) {
+    holder.className = "empty";
+    holder.textContent = "가로·세로 입력 후 ‘＋ 견적 추가하기’를 눌러주세요.";
+  } else {
+    holder.className = "";
+    quoteList.forEach((entry, index) => {
+      const row = document.createElement("div");
+      row.className = "quote-item";
+      const details = document.createElement("div");
+      const title = document.createElement("div");
+      title.className = "quote-title";
+      title.textContent = `${index+1}. ${entry.material}`;
+      const subtitle = document.createElement("div");
+      subtitle.className = "quote-detail";
+      subtitle.textContent = `${entry.w} × ${entry.h}mm · 주문수량 ${entry.qty}개`;
+      details.append(title,subtitle);
+      const right = document.createElement("div");
+      const price = document.createElement("div");
+      price.className = "quote-price";
+      price.textContent = won(entry.price);
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "delete";
+      del.textContent = "삭제";
+      del.setAttribute("aria-label", `${index+1}번 견적 삭제`);
+      del.addEventListener("click", () => { quoteList.splice(index,1); renderQuotes(); });
+      right.append(price,del);
+      row.append(details,right);
+      holder.append(row);
+    });
+  }
+  $("grandTotal").textContent = won(quoteList.reduce((sum, entry) => sum + entry.price, 0));
+  $("copyStatus").textContent = "";
+}
+function addCurrentQuote(){
+  if (!currentQuote) return;
+  quoteList.push({...currentQuote});
+  renderQuotes();
+  $("copyStatus").textContent = `견적 ${quoteList.length}건이 추가되었습니다.`;
+}
+$("addBtn").addEventListener("click", addCurrentQuote);
+$("quickAddBtn").addEventListener("click", () => {
+  if (calculate() !== true) return;
+  addCurrentQuote();
+});
+$("clearBtn").addEventListener("click", () => {
+  if (!quoteList.length) return;
+  if (!confirm("견적 리스트를 모두 삭제할까요?")) return;
+  quoteList = [];
+  renderQuotes();
+});
+function quoteText() {
+  const lines = ["[방범창 견적 내용]"];
+  quoteList.forEach((x,i) => {
+    lines.push(`${i+1}. ${x.material}`);
+    lines.push(`   규격: ${x.w} × ${x.h}mm`);
+    lines.push(`   주문수량: ${x.qty}개 / 금액: ${won(x.price)}`);
+  });
+  lines.push(`총 ${quoteList.length}건 / 총 견적금액: ${won(quoteList.reduce((n,x) => n+x.price,0))}`);
+  lines.push("※ 배송비 별도");
+  return lines.join("\n");
+}
+$("copyBtn").addEventListener("click", async () => {
+  if (!quoteList.length) { $("copyStatus").textContent = "먼저 견적을 추가해주세요."; return; }
+  const value = quoteText();
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const ok = document.execCommand("copy");
+      textarea.remove();
+      if (!ok) throw new Error("복사 실패");
+    }
+    $("copyStatus").textContent = "견적 내용이 복사되었습니다. 카톡이나 문자에 붙여넣으세요.";
+  } catch (e) {
+    $("copyStatus").textContent = "자동 복사에 실패했습니다. 브라우저의 복사 권한을 확인해주세요.";
+  }
+});
+
+let orderImageUrl = null;
+let orderBlob = null;
+const orderDate = () => {const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+function orderCanvas(){
+  const c=document.createElement('canvas'),ctx=c.getContext('2d');
+  const width=1100, left=88, right=1012;
+  const grouped=[];
+  quoteList.forEach(q=>{
+    const group=grouped.find(g=>g.material===q.material);
+    if(group)group.items.push(q);else grouped.push({material:q.material,items:[q]});
+  });
+  const rows=[];
+  grouped.forEach(g=>{
+    rows.push({text:g.material,kind:'product'});
+    for(let i=0;i<g.items.length;i+=3){rows.push({text:g.items.slice(i,i+3).map(x=>`${x.w}×${x.h}mm`).join('  /  '),kind:'size'});}
+  });
+  const rowHeight=58;
+  const orderBoxHeight=Math.max(270,84+rows.length*rowHeight);
+  const addressLines=($('orderDelivery').value.trim()||'미입력').split('\n');
+  const addressHeight=Math.max(130,76+addressLines.length*34);
+  const H=185+orderBoxHeight+25+134+20+addressHeight+135;
+  c.width=width*2;c.height=H*2;ctx.scale(2,2);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,width,H);
+  ctx.strokeStyle='#142a52';ctx.lineWidth=10;ctx.strokeRect(17,18,width-34,H-36);
+  ctx.textBaseline='middle';
+  const text=(t,x,y,size=23,color='#101828',weight=700)=>{ctx.font=`${weight} ${size}px "Malgun Gothic","Apple SD Gothic Neo",sans-serif`;ctx.fillStyle=color;ctx.fillText(t,x,y);};
+  const section=(label,y)=>{ctx.fillStyle='#182f61';ctx.beginPath();ctx.roundRect(left,y,right-left,53,12);ctx.fill();ctx.fillRect(left,y+26,right-left,27);text(label,left+20,y+27,25,'#fff',800);};
+  text('발주내용',left,108,51,'#1c345f',900);text(orderDate(),right-174,105,27,'#101827',800);
+  ctx.fillStyle='#182f61';ctx.fillRect(left,151,right-left,6);
+  const y1=178;section('주문내역',y1);
+  ctx.strokeStyle='#1b3462';ctx.lineWidth=3;ctx.strokeRect(left,y1+49,right-left,orderBoxHeight-49);
+  let y=y1+80;
+  rows.forEach((r,i)=>{
+    const rowY=y+i*rowHeight;
+    ctx.fillStyle='#e2eaf7';ctx.beginPath();ctx.arc(left+38,rowY,18,0,Math.PI*2);ctx.fill();
+    text(String(i+1),left+31,rowY+2,17,'#183669',800);
+    text(r.text,left+80,rowY, r.kind==='product'?23:22,'#111a2b',800);
+    if(i!==rows.length-1){ctx.strokeStyle='#d5dbe6';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(left+24,rowY+29);ctx.lineTo(right-20,rowY+29);ctx.stroke();}
+  });
+  const y2=y1+orderBoxHeight+22;section('주문자 · 연락처',y2);
+  const boxY=y2+50;
+  ctx.strokeStyle='#1b3462';ctx.lineWidth=2;ctx.strokeRect(left,boxY,right-left,83);
+  ctx.beginPath();ctx.moveTo(left+450,boxY);ctx.lineTo(left+450,boxY+83);ctx.stroke();
+  text('주문자',left+18,boxY+22,17,'#2f466c');text($('orderName').value.trim()||'미입력',left+18,boxY+54,25);
+  text('연락처',left+469,boxY+22,17,'#2f466c');text($('orderPhone').value.trim()||'미입력',left+469,boxY+54,25);
+  const y3=y2+153;section('배송사항',y3);
+  ctx.strokeStyle='#1b3462';ctx.lineWidth=2;ctx.strokeRect(left,y3+50,right-left,addressHeight-50);
+  addressLines.forEach((line,i)=>text(line,left+18,y3+86+i*34,23));
+  let foot=y3+addressHeight+40;
+  ctx.fillStyle='#182f61';ctx.fillRect(left,foot,right-left,5);
+  text('(주)강동자바라',left,foot+67,29,'#172033',900);
+  text('주문내용 확인 후 제작 진행',right-345,foot+67,20,'#172033');
+  if($('orderNote').value.trim()){
+    // 특이사항은 주문내역 맨 아래에 인쇄
+    ctx.fillStyle='#334155';ctx.font='bold 19px "Malgun Gothic",sans-serif';
+    ctx.fillText('특이사항: '+$('orderNote').value.trim(),left+20,y1+orderBoxHeight-22,right-left-50);
+  }
+  return c;
+}
+$('orderMakeBtn').addEventListener('click',()=>{
+ if(!quoteList.length){$('copyStatus').textContent='견적을 먼저 리스트에 추가해주세요.';return;}
+ const canvas=orderCanvas();
+ canvas.toBlob(blob=>{
+   if(!blob){$('copyStatus').textContent='이미지 생성에 실패했습니다.';return;}
+   if(orderImageUrl)URL.revokeObjectURL(orderImageUrl);
+   orderBlob=blob;orderImageUrl=URL.createObjectURL(blob);
+   $('orderImage').src=orderImageUrl;
+   $('orderPreview').style.display='block';
+   $('copyStatus').textContent='발주서 이미지가 작성되었습니다. 아래에서 저장하거나 공유하세요.';
+ },'image/png');
+});
+$('orderDownloadBtn').addEventListener('click',()=>{
+ if(!orderImageUrl)return;
+ const a=document.createElement('a');a.href=orderImageUrl;a.download=`강동자바라_발주서_${orderDate()}.png`;document.body.append(a);a.click();a.remove();
+});
+$('orderShareBtn').addEventListener('click',async()=>{
+ if(!orderBlob)return;
+ const file=new File([orderBlob],`강동자바라_발주서_${orderDate()}.png`,{type:'image/png'});
+ try{
+   if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'강동자바라 발주서'});return;}
+   $('copyStatus').textContent='이 브라우저에서는 이미지 직접 공유를 지원하지 않습니다. 이미지 저장 후 카카오톡 등에 첨부해주세요.';
+ }catch(e){if(e.name!=='AbortError')$('copyStatus').textContent='공유에 실패했습니다. 이미지 저장을 이용해주세요.';}
+});
 
 document.getElementById("calcBtn").addEventListener("click", calculate);
 ["width","height"].forEach(id => {
