@@ -66,7 +66,7 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
 <div class="wrap">
   <div class="card">
     <h1>쿠팡 방범창 가격 계산기</h1>
-    <p class="sub">재질 선택 후 가로·세로(mm)를 입력하면 단가표 기준 가격을 계산합니다.</p>
+    <p class="sub">재질과 가로·세로(mm)를 입력하면 가격이 자동으로 계산됩니다.</p>
 
     <div class="materials">
       <button class="active" data-key="sus201">SUS201</button>
@@ -85,7 +85,7 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
       </div>
     </div>
 
-    <div id="alMin" style="display:none;margin-top:10px;font-size:14px;font-weight:700;color:#c2410c;">가로·세로 각각 최소 900mm 적용 · 알루미늄은 한 변이 2200mm 이상이면 평당 8,000원 적용</div><button class="calc" id="calcBtn">가격 계산하기</button>
+    <div id="alMin" style="display:none;margin-top:10px;font-size:14px;font-weight:700;color:#c2410c;">가로·세로 각각 최소 900mm 적용 · 알루미늄은 한 변이 2200mm 이상이면 평당 8,000원 적용</div>
     <button type="button" class="quick-add" id="quickAddBtn">＋ 견적 추가하기</button>
     <div class="hint-add">여러 규격은 가로·세로를 바꿔가며 계속 추가하세요.</div>
 
@@ -95,7 +95,7 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
       <div class="small" id="rangeText"></div>
       <div class="qty" id="qtyText"></div>
       <div class="price" id="priceText"></div>
-      <button type="button" class="add" id="addBtn">+ 견적 리스트에 추가</button>
+      
     </div>
 
     <section class="quote" aria-label="견적 리스트">
@@ -139,9 +139,7 @@ document.querySelectorAll(".materials button").forEach(btn => {
     btn.classList.add("active");
     selected = btn.dataset.key;
     document.getElementById("alMin").style.display = selected === "al" ? "block" : "none";
-    document.getElementById("result").style.display = "none";
-    currentQuote = null;
-    document.getElementById("error").style.display = "none";
+    calculate(true);
   });
 });
 
@@ -158,7 +156,7 @@ function won(n) {
   return new Intl.NumberFormat("ko-KR").format(n) + "원";
 }
 
-function calculate() {
+function calculate(silent = false) {
   const w = Number(document.getElementById("width").value);
   const h = Number(document.getElementById("height").value);
   const t = TABLES[selected];
@@ -169,6 +167,7 @@ function calculate() {
   currentQuote = null;
 
   if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+    if (silent) return false;
     error.textContent = "가로와 세로를 mm 단위로 입력해주세요.";
     error.style.display = "block";
     return false;
@@ -221,7 +220,7 @@ function renderQuotes() {
   $("itemCount").textContent = `(${quoteList.length}건)`;
   if (!quoteList.length) {
     holder.className = "empty";
-    holder.textContent = "견적을 계산한 뒤 ‘견적 리스트에 추가’를 눌러주세요.";
+    holder.textContent = "규격을 입력하고 ‘＋ 견적 추가하기’를 눌러주세요.";
   } else {
     holder.className = "";
     quoteList.forEach((entry, index) => {
@@ -259,7 +258,6 @@ function addCurrentQuote(){
   renderQuotes();
   $("copyStatus").textContent = `견적 ${quoteList.length}건이 추가되었습니다.`;
 }
-$("addBtn").addEventListener("click", addCurrentQuote);
 $("quickAddBtn").addEventListener("click", () => {
   if (calculate() !== true) return;
   addCurrentQuote();
@@ -388,10 +386,10 @@ $('orderShareBtn').addEventListener('click',async()=>{
  }catch(e){if(e.name!=='AbortError')$('copyStatus').textContent='공유에 실패했습니다. 이미지 저장을 이용해주세요.';}
 });
 
-document.getElementById("calcBtn").addEventListener("click", calculate);
 ["width","height"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => calculate(true));
   document.getElementById(id).addEventListener("keydown", e => {
-    if (e.key === "Enter") calculate();
+    if (e.key === "Enter") { e.preventDefault(); if (calculate(true)) addCurrentQuote(); }
   });
 });
 </script>
