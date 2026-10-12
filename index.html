@@ -85,7 +85,7 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
       </div>
     </div>
 
-    <div id="alMin" style="display:none;margin-top:10px;font-size:14px;font-weight:700;color:#c2410c;">가로·세로 각각 최소 900mm 적용 · 알루미늄은 한 변이 2200mm 이상이면 평당 8,000원 적용</div>
+    <div id="alMin" style="display:none;margin-top:10px;font-size:14px;font-weight:700;color:#c2410c;">가로·세로 각각 최소 900mm 적용 · 알루미늄은 한 변이 2200mm 이상이면 평당 6,000원 적용</div>
     <button type="button" class="quick-add" id="quickAddBtn">＋ 견적 추가하기</button>
     <div class="hint-add">여러 규격은 가로·세로를 바꿔가며 계속 추가하세요.</div>
 
@@ -120,7 +120,7 @@ input:focus{border-color:#315efb;box-shadow:0 0 0 3px rgba(49,94,251,.10)}
     <div class="note">
       · 가격 = 단가표 주문수량 × 1,000원 (알루미늄 2200mm 이상은 평단가 적용)<br>
       · 배송비는 포함하지 않습니다.<br>
-      · 가로·세로 각각 최소 900mm 적용 · 알루미늄은 한 변이 2200mm 이상이면 평당 8,000원 적용<br>
+      · 가로·세로 각각 최소 900mm 적용 · 알루미늄은 한 변이 2200mm 이상이면 평당 6,000원 적용<br>
       · 입력값이 표 범위를 벗어나면 계산되지 않습니다.
     </div>
   </div>
@@ -180,10 +180,10 @@ function calculate(silent = false) {
   if (selected === "al" && (w >= 2200 || h >= 2200)) {
     // 이 견적기는 결제금액 1,000원당 주문수량 1개로 연동됨.
     // 기존 관행대로 1평 = 300mm × 300mm, 1,000원 단위 올림.
-    const rawPrice = (cw * ch / 90000) * 8000;
+    const rawPrice = (cw * ch / 90000) * 6000;
     qty = Math.ceil(rawPrice / 1000);
     price = qty * 1000;
-    explanation = t.label + " · 평당 8,000원 (300×300mm 기준) · 계산 규격 " + cw + "×" + ch + "mm";
+    explanation = t.label + " · 평당 6,000원 (300×300mm 기준) · 계산 규격 " + cw + "×" + ch + "mm";
   } else {
     const ci = findIndex(cw, t.width_bins);
     const ri = findIndex(ch, t.height_bins);
